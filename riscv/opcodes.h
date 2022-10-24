@@ -23,6 +23,16 @@ static uint32_t jal(unsigned int rd, uint32_t imm) {
     MATCH_JAL;
 }
 
+static uint32_t fork(unsigned int rd, uint32_t imm) __attribute__ ((unused));
+static uint32_t fork(unsigned int rd, uint32_t imm) {
+  return (bit(imm, 20) << 31) |
+    (bits(imm, 10, 1) << 21) |
+    (bit(imm, 11) << 20) |
+    (bits(imm, 19, 12) << 12) |
+    (rd << 7) |
+    MATCH_FORK;
+}
+
 static uint32_t csrsi(unsigned int csr, uint16_t imm) __attribute__ ((unused));
 static uint32_t csrsi(unsigned int csr, uint16_t imm) {
   return (csr << 20) |
