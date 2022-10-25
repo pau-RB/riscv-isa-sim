@@ -33,6 +33,16 @@ static uint32_t fork(unsigned int rd, uint32_t imm) {
     MATCH_FORK;
 }
 
+static uint32_t join(unsigned int src, unsigned int base, uint16_t offset) __attribute__ ((unused));
+static uint32_t join(unsigned int src, unsigned int base, uint16_t offset)
+{
+  return (bits(offset, 11, 5) << 25) |
+    (src << 20) |
+    (base << 15) |
+    (bits(offset, 4, 0) << 7) |
+    MATCH_JOIN;
+}
+
 static uint32_t csrsi(unsigned int csr, uint16_t imm) __attribute__ ((unused));
 static uint32_t csrsi(unsigned int csr, uint16_t imm) {
   return (csr << 20) |
