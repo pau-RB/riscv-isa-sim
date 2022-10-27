@@ -87,6 +87,8 @@ riscv_srcs = \
 	devices.cc \
 	rom.cc \
 	clint.cc \
+	plic.cc \
+	ns16550.cc \
 	debug_module.cc \
 	remote_bitbang.cc \
 	jtag_dtm.cc \

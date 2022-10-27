@@ -29,6 +29,7 @@
 
 processor_t::processor_t(const isa_parser_t *isa, const char* varch,
                          simif_t* sim, uint32_t id, bool halt_on_reset,
+                         memif_endianness_t endianness,
                          FILE* log_file, std::ostream& sout_)
   : debug(false), halt_request(HR_NONE), isa(isa), sim(sim), id(id), xlen(0),
   histogram_enabled(false), log_commits_enabled(false),
@@ -48,7 +49,7 @@ processor_t::processor_t(const isa_parser_t *isa, const char* varch,
   parse_varch_string(varch);
 
   register_base_instructions();
-  mmu = new mmu_t(sim, this);
+  mmu = new mmu_t(sim, endianness, this);
 
   disassembler = new disassembler_t(isa);
   for (auto e : isa->get_extensions())
@@ -237,8 +238,10 @@ void state_t::reset(processor_t* const proc, reg_t max_isa)
     const reg_t which_mcounterh = CSR_MHPMCOUNTER3H + i - 3;
     const reg_t which_counter = CSR_HPMCOUNTER3 + i - 3;
     const reg_t which_counterh = CSR_HPMCOUNTER3H + i - 3;
-    const reg_t mevent_mask = proc->extension_enabled_const(EXT_SSCOFPMF) ? MHPMEVENT_VUINH | MHPMEVENT_VSINH | MHPMEVENTH_UINH |
-                                                                            MHPMEVENT_UINH | MHPMEVENT_MINH | MHPMEVENT_OF : 0;
+    const reg_t mevent_mask = proc->extension_enabled_const(EXT_SSCOFPMF) ? MHPMEVENT_OF | MHPMEVENT_MINH
+      | (proc->extension_enabled_const('U') ? MHPMEVENT_UINH : 0)
+      | (proc->extension_enabled_const('S') ? MHPMEVENT_SINH : 0)
+      | (proc->extension_enabled_const('H') ? MHPMEVENT_VUINH | MHPMEVENT_VSINH : 0) : 0;
     mevent[i - 3] = std::make_shared<masked_csr_t>(proc, which_mevent, mevent_mask, 0);
     auto mcounter = std::make_shared<const_csr_t>(proc, which_mcounter, 0);
     csrmap[which_mcounter] = mcounter;
@@ -753,6 +756,24 @@ void processor_t::set_privilege(reg_t prv)
 {
   mmu->flush_tlb();
   state.prv = legalize_privilege(prv);
+}
+
+const char* processor_t::get_privilege_string()
+{
+  if (state.v) {
+    switch (state.prv) {
+    case 0x0: return "VU";
+    case 0x1: return "VS";
+    }
+  } else {
+    switch (state.prv) {
+    case 0x0: return "U";
+    case 0x1: return "S";
+    case 0x3: return "M";
+    }
+  }
+  fprintf(stderr, "Invalid prv=%lx v=%x\n", (unsigned long)state.prv, state.v);
+  abort();
 }
 
 void processor_t::set_virt(bool virt)

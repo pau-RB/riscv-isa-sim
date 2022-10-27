@@ -27,7 +27,7 @@ static void commit_log_print_value(FILE *log_file, int width, const void *data)
 
   switch (width) {
     case 8:
-      fprintf(log_file, "0x%01" PRIx8, *(const uint8_t *)data);
+      fprintf(log_file, "0x%02" PRIx8, *(const uint8_t *)data);
       break;
     case 16:
       fprintf(log_file, "0x%04" PRIx16, *(const uint16_t *)data);
@@ -309,15 +309,6 @@ void processor_t::step(size_t n)
     catch (triggers::matched_t& t)
     {
       if (mmu->matched_trigger) {
-        // This exception came from the MMU. That means the instruction hasn't
-        // fully executed yet. We start it again, but this time it won't throw
-        // an exception because matched_trigger is already set. (All memory
-        // instructions are idempotent so restarting is safe.)
-
-        insn_fetch_t fetch = mmu->load_insn(pc);
-        pc = execute_insn(this, pc, fetch);
-        advance_pc();
-
         delete mmu->matched_trigger;
         mmu->matched_trigger = NULL;
       }

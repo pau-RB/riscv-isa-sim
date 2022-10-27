@@ -313,11 +313,15 @@ void sim_t::interactive()
   funcs["fregs"] = &sim_t::interactive_fregs;
   funcs["fregd"] = &sim_t::interactive_fregd;
   funcs["pc"] = &sim_t::interactive_pc;
+  funcs["priv"] = &sim_t::interactive_priv;
   funcs["mem"] = &sim_t::interactive_mem;
   funcs["str"] = &sim_t::interactive_str;
+  funcs["mtime"] = &sim_t::interactive_mtime;
+  funcs["mtimecmp"] = &sim_t::interactive_mtimecmp;
   funcs["until"] = &sim_t::interactive_until_silent;
   funcs["untiln"] = &sim_t::interactive_until_noisy;
   funcs["while"] = &sim_t::interactive_until_silent;
+  funcs["dump"] = &sim_t::interactive_dumpmems;
   funcs["quit"] = &sim_t::interactive_quit;
   funcs["q"] = funcs["quit"];
   funcs["help"] = &sim_t::interactive_help;
@@ -393,8 +397,12 @@ void sim_t::interactive_help(const std::string& cmd, const std::vector<std::stri
     "fregd <core> <reg>              # Display double precision <reg> in <core>\n"
     "vreg <core> [reg]               # Display vector [reg] (all if omitted) in <core>\n"
     "pc <core>                       # Show current PC in <core>\n"
+    "priv <core>                     # Show current privilege level in <core>\n"
     "mem [core] <hex addr>           # Show contents of virtual memory <hex addr> in [core] (physical memory <hex addr> if omitted)\n"
     "str [core] <hex addr>           # Show NUL-terminated C string at virtual address <hex addr> in [core] (physical address <hex addr> if omitted)\n"
+    "dump                            # Dump physical memory to binary files\n"
+    "mtime                           # Show mtime\n"
+    "mtimecmp <core>                 # Show mtimecmp for <core>\n"
     "until reg <core> <reg> <val>    # Stop when <reg> in <core> hits <val>\n"
     "untiln reg <core> <reg> <val>   # Run noisy and stop when <reg> in <core> hits <val>\n"
     "until pc <core> <val>           # Stop when PC in <core> hits <val>\n"
@@ -462,6 +470,16 @@ void sim_t::interactive_pc(const std::string& cmd, const std::vector<std::string
   std::ostream out(sout_.rdbuf());
   out << std::hex << std::setfill('0') << "0x" << std::setw(max_xlen/4)
       << zext(get_pc(args), max_xlen) << std::endl;
+}
+
+void sim_t::interactive_priv(const std::string& cmd, const std::vector<std::string>& args)
+{
+  if (args.size() != 1)
+    throw trap_interactive();
+
+  processor_t *p = get_core(args[0]);
+  std::ostream out(sout_.rdbuf());
+  out << p->get_privilege_string() << std::endl;
 }
 
 reg_t sim_t::get_reg(const std::vector<std::string>& args)
@@ -660,17 +678,17 @@ reg_t sim_t::get_mem(const std::vector<std::string>& args)
   switch (addr % 8)
   {
     case 0:
-      val = mmu->load_uint64(addr);
+      val = mmu->load<uint64_t>(addr);
       break;
     case 4:
-      val = mmu->load_uint32(addr);
+      val = mmu->load<uint32_t>(addr);
       break;
     case 2:
     case 6:
-      val = mmu->load_uint16(addr);
+      val = mmu->load<uint16_t>(addr);
       break;
     default:
-      val = mmu->load_uint8(addr);
+      val = mmu->load<uint8_t>(addr);
       break;
   }
   return val;
@@ -704,7 +722,7 @@ void sim_t::interactive_str(const std::string& cmd, const std::vector<std::strin
   std::ostream out(sout_.rdbuf());
 
   char ch;
-  while ((ch = mmu->load_uint8(addr++)))
+  while ((ch = mmu->load<uint8_t>(addr++)))
     out << ch;
 
   out << std::endl;
@@ -774,3 +792,34 @@ void sim_t::interactive_until(const std::string& cmd, const std::vector<std::str
     step(1);
   }
 }
+
+void sim_t::interactive_dumpmems(const std::string& cmd, const std::vector<std::string>& args)
+{
+  for (unsigned i = 0; i < mems.size(); i++) {
+    std::stringstream mem_fname;
+    mem_fname << "mem.0x" << std::hex << mems[i].first << ".bin";
+
+    std::ofstream mem_file(mem_fname.str());
+    mems[i].second->dump(mem_file);
+    mem_file.close();
+  }
+}
+
+void sim_t::interactive_mtime(const std::string& cmd, const std::vector<std::string>& args)
+{
+  std::ostream out(sout_.rdbuf());
+  out << std::hex << std::setfill('0') << "0x" << std::setw(16)
+      << clint->get_mtime() << std::endl;
+}
+
+void sim_t::interactive_mtimecmp(const std::string& cmd, const std::vector<std::string>& args)
+{
+  if (args.size() != 1)
+    throw trap_interactive();
+
+  processor_t *p = get_core(args[0]);
+  std::ostream out(sout_.rdbuf());
+  out << std::hex << std::setfill('0') << "0x" << std::setw(16)
+      << clint->get_mtimecmp(p->get_id()) << std::endl;
+}
+

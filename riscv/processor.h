@@ -16,6 +16,7 @@
 #include "csrs.h"
 #include "isa_parser.h"
 #include "triggers.h"
+#include "memif.h"
 
 class processor_t;
 class mmu_t;
@@ -219,21 +220,13 @@ struct state_t
 #endif
 };
 
-// Count number of contiguous 1 bits starting from the LSB.
-static inline int cto(reg_t val)
-{
-  int res = 0;
-  while ((val & 1) == 1)
-    val >>= 1, res++;
-  return res;
-}
-
 // this class represents one processor in a RISC-V machine.
 class processor_t : public abstract_device_t
 {
 public:
   processor_t(const isa_parser_t *isa, const char* varch,
               simif_t* sim, uint32_t id, bool halt_on_reset,
+              memif_endianness_t endianness,
               FILE *log_file, std::ostream& sout_); // because of command line option --log and -s we need both
   ~processor_t();
 
@@ -299,6 +292,7 @@ public:
   reg_t legalize_privilege(reg_t);
   void set_privilege(reg_t);
   void set_virt(bool);
+  const char* get_privilege_string();
   void update_histogram(reg_t pc);
   const disassembler_t* get_disassembler() { return disassembler; }
 
@@ -365,6 +359,7 @@ private:
 
   friend class mmu_t;
   friend class clint_t;
+  friend class plic_t;
   friend class extension_t;
 
   void parse_varch_string(const char*);
