@@ -1006,10 +1006,10 @@
 #define MASK_INSB 0xff80707f
 #define MATCH_JAL 0x6f
 #define MASK_JAL 0x7f
-#define MATCH_FORK 0x0b
-#define MASK_FORK 0x7f
-#define MATCH_JOIN 0x2b
-#define MASK_JOIN 0x7f
+#define MATCH_FORK 0x0000000b
+#define MASK_FORK 0x00000fff
+#define MATCH_JOIN 0x0000002b
+#define MASK_JOIN 0x01F0707f
 #define MATCH_JALR 0x67
 #define MASK_JALR 0x707f
 #define MATCH_KABS16 0xad100077

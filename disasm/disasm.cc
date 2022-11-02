@@ -718,6 +718,7 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
   DEFINE_XSTORE(sh)
   DEFINE_XSTORE(sw)
   DEFINE_XSTORE(sd)
+  DEFINE_XSTORE(join)
 
   if (isa->extension_enabled('A')) {
     DEFINE_XAMO(amoadd_w)
@@ -747,6 +748,7 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
   add_insn(new disasm_insn_t("j", match_jal, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
+  add_insn(new disasm_insn_t("fork", match_fork, mask_fork, {&jump_target}));
 
   DEFINE_B1TYPE("beqz", beq);
   DEFINE_B1TYPE("bnez", bne);
