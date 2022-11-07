@@ -29,8 +29,15 @@ static uint32_t fork(unsigned int rd, uint32_t imm) {
     (bits(imm, 10, 1) << 21) |
     (bit(imm, 11) << 20) |
     (bits(imm, 19, 12) << 12) |
-    (rd << 7) |
     MATCH_FORK;
+}
+
+static uint32_t forkr(unsigned int rd, unsigned int base, uint16_t offset) __attribute__ ((unused));
+static uint32_t forkr(unsigned int rd, unsigned int base, uint16_t offset)
+{
+  return (bits(offset, 11, 0) << 20) |
+    (base << 15) |
+    MATCH_FORKR;
 }
 
 static uint32_t join(unsigned int src, unsigned int base, uint16_t offset) __attribute__ ((unused));

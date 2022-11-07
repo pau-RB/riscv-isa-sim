@@ -118,6 +118,7 @@ riscv_insn_ext_i = \
 	bne \
 	jal \
 	fork \
+	forkr\
 	join \
 	jalr \
 	lb \
