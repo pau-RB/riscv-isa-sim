@@ -1,1 +1,1 @@
-MMU.store<uint32_t>(RS1 + insn.s_imm(), 1);
+MMU.store<uint32_t>(RS1 + insn.i_imm(), 1);

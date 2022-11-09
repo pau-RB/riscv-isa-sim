@@ -40,13 +40,11 @@ static uint32_t forkr(unsigned int rd, unsigned int base, uint16_t offset)
     MATCH_FORKR;
 }
 
-static uint32_t join(unsigned int src, unsigned int base, uint16_t offset) __attribute__ ((unused));
-static uint32_t join(unsigned int src, unsigned int base, uint16_t offset)
+static uint32_t join(unsigned int rd, unsigned int base, uint16_t offset) __attribute__ ((unused));
+static uint32_t join(unsigned int rd, unsigned int base, uint16_t offset)
 {
-  return (bits(offset, 11, 5) << 25) |
-    (src << 20) |
+  return (bits(offset, 11, 0) << 20) |
     (base << 15) |
-    (bits(offset, 4, 0) << 7) |
     MATCH_JOIN;
 }
 
